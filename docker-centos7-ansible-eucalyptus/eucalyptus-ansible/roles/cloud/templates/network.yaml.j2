@@ -1,0 +1,38 @@
+Mode: {{ net_mode }}
+
+InstanceDnsServers:
+{% if net_instance_dns_servers %}
+{% for ip in net_instance_dns_servers %}
+- "{{ ip }}"
+{% endfor %}
+{% else %}
+{% for ip in (groups['cloud'] | map('extract', hostvars, ['eucalyptus_host_cluster_ipv4'])) %}
+- "{{ ip }}"
+{% endfor %}
+{% endif %}
+
+PublicIps:
+{% for range in net_public_ip_ranges %}
+- "{{ range }}"
+{% endfor %}
+
+{% if net_mode == 'EDGE' %}
+PrivateIps:
+{% for range in net_private_ip_ranges %}
+- "{{ range }}"
+{% endfor %}
+
+Subnets:
+- Gateway: "{{ edge_gateway }}"
+  Netmask: "{{ edge_netmask }}"
+  Subnet: "{{ edge_subnet }}"
+{% elif net_mode == 'VPCMIDO' %}
+Mido:
+  Gateways:
+  - ExternalCidr: "{{ vpcmido_gw_ext_cidr }}"
+    ExternalDevice: "{{ vpcmido_gw_ext_device }}"
+    ExternalIp: "{{ vpcmido_gw_ext_ip }}"
+    ExternalRouterIp: "{{ vpcmido_gw_ext_router_ip }}"
+    Ip: "{{ eucalyptus_host_cluster_ipv4 }}"
+{% endif %}
+

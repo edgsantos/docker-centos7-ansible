@@ -1,0 +1,121 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Route53 system HostedZone and management console dns for Eucalyptus
+
+Parameters:
+
+  SystemDnsDomain:
+    Description: The system dns domain in use
+    Type: String
+    Default: ""
+
+  ConsoleCname:
+    Description: Name for a Eucalyptus Console CNAME record
+    Type: String
+    Default: ""
+
+  ConsoleIpAddress:
+    Description: IP address for a Eucalyptus Console A record
+    Type: String
+    Default: ""
+
+  ConsoleTTL:
+    Description: TTL for Eucalyptus Console record
+    Type: String
+    Default: "900"
+
+  NegativeTTL:
+    Description: Negative TTL for the zone SOA record
+    Type: String
+    Default: "5"
+
+  TTL:
+    Description: Default TTL for the zone
+    Type: String
+    Default: "60"
+
+Conditions:
+
+  CreateConsoleARecordSet: !Not
+  - !Equals
+    - !Ref ConsoleIpAddress
+    - ""
+
+  CreateConsoleCnameRecordSet: !Not
+  - !Equals
+    - !Ref ConsoleCname
+    - ""
+
+  UseSystemDnsDomainParameter: !Not
+  - !Equals
+    - !Ref SystemDnsDomain
+    - ""
+
+Resources:
+
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      HostedZoneConfig:
+        Comment:
+      Name: !If
+        - UseSystemDnsDomainParameter
+        - !Ref "SystemDnsDomain"
+        - !Ref "AWS::URLSuffix"
+
+  SOARecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !If
+        - UseSystemDnsDomainParameter
+        - !Ref "SystemDnsDomain"
+        - !Ref "AWS::URLSuffix"
+      ResourceRecords:
+      - !Sub
+        - "ns1.${SystemDomain}. root.${SystemDomain}. 1 1200 180 2419200 ${NegativeTTL}"
+        - SystemDomain: !If
+          - UseSystemDnsDomainParameter
+          - !Ref "SystemDnsDomain"
+          - !Ref "AWS::URLSuffix"
+      TTL: !Ref TTL
+      Type: SOA
+
+  ConsoleARecordSet:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateConsoleARecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub
+        - "console.${SystemDomain}"
+        - SystemDomain: !If
+          - UseSystemDnsDomainParameter
+          - !Ref "SystemDnsDomain"
+          - !Ref "AWS::URLSuffix"
+      ResourceRecords:
+      - !Ref ConsoleIpAddress
+      TTL: !Ref ConsoleTTL
+      Type: A
+
+  ConsoleCnameRecordSet:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateConsoleCnameRecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Sub
+        - "console.${SystemDomain}"
+        - SystemDomain: !If
+          - UseSystemDnsDomainParameter
+          - !Ref "SystemDnsDomain"
+          - !Ref "AWS::URLSuffix"
+      ResourceRecords:
+      - !Ref ConsoleCname
+      TTL: !Ref ConsoleTTL
+      Type: CNAME
+
+Outputs:
+
+  HostedZoneId:
+    Description: The identifier for the system hosted zone
+    Value: !Ref HostedZone

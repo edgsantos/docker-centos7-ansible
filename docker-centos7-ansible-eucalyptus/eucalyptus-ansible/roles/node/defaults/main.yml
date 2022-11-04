@@ -1,0 +1,14 @@
+---
+eucalyptus_package_version: ""
+eucalyptus_package_suffix: "{{ '-' + eucalyptus_package_version if eucalyptus_package_version else '' }}"
+
+# Network settings
+net_mode: EDGE
+
+# Midonet settings
+midonet_midolman_heap: Null
+
+# EDGE settings
+edge_bridge_create_ip: 172.31.0.1
+edge_bridge_create_prefix: 16
+
