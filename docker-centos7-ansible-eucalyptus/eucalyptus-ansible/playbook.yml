@@ -1,0 +1,65 @@
+---
+# Eucalyptus playbook
+- hosts: all
+  gather_facts: no
+  tasks:
+  - import_tasks: host_groups.yml
+
+- hosts: ceph:ceph_object_gateway:ceph_deploy
+  roles:
+  - ceph-host
+
+- hosts: ceph_deploy
+  roles:
+  - ceph
+
+- hosts: minio
+  roles:
+  - minio
+
+- hosts: node
+  tasks:
+  - name: eucalyptus node host facts
+    include_role:
+      name: common
+      tasks_from: host_facts
+
+- hosts: midonet_nsdb
+  module_defaults:
+    yum:
+      disablerepo: "{{ eucalyptus_yum_disablerepo | default(omit) }}"
+  roles:
+  - midonet-nsdb
+
+- hosts: cloud
+  module_defaults:
+    yum:
+      disablerepo: "{{ eucalyptus_yum_disablerepo | default(omit) }}"
+  roles:
+  - cloud
+
+- hosts: zone
+  module_defaults:
+    yum:
+      disablerepo: "{{ eucalyptus_yum_disablerepo | default(omit) }}"
+  roles:
+  - zone
+
+- hosts: node
+  module_defaults:
+    yum:
+      disablerepo: "{{ eucalyptus_yum_disablerepo | default(omit) }}"
+  roles:
+  - node
+
+- hosts: console
+  module_defaults:
+    yum:
+      disablerepo: "{{ eucalyptus_yum_disablerepo | default(omit) }}"
+  roles:
+  - console
+
+- hosts: cloud
+  roles:
+  - cloud-post
+

@@ -1,0 +1,27 @@
+---
+all:
+  hosts:
+    host1:
+      ansible_connection: local
+  vars:
+    eucalyptus_yum_baseurl: "http://downloads.eucalyptus.cloud/software/eucalyptus/5/rhel/7/x86_64/"
+
+    cloud_firewalld_cluster_cidr: "{{ ansible_default_ipv4.address }}/32"
+    cloud_firewalld_configure: yes
+
+    cloud_system_dns_dnsdomain: "cloud-{{ ansible_default_ipv4.address|replace('.', '-') }}.euca.me"
+
+    # If enabled deployment must be public
+    eucaconsole_certbot_configure: no
+
+    vpcmido_public_ip_range: 192.168.254.129-192.168.254.254
+    vpcmido_public_ip_cidr: 192.168.254.128/25
+
+  children:
+    cloud:
+      hosts:
+        host1:
+    # Optional management console remove if not required
+    console:
+      hosts:
+        host1:
